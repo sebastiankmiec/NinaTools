@@ -1,0 +1,4 @@
+*.pyc
+*.swp
+all_data/
+.idea
