@@ -1,4 +1,4 @@
 {
 	"model": "rf",
-	"features": "hist"
+	"features": "all"
 }

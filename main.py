@@ -17,8 +17,8 @@ def main():
     dataset = BaselineDataset(DATA_PATH, feat_extractor)
 
     if not dataset.load_dataset():
-        print("Loading Ninapro data from processed directory...")
         data_parser = NinaDataParser(DATA_PATH)
+        print("Loading Ninapro data from processed directory...")
         loaded_nina = data_parser.load_processed_data()
 
         print("Extracting dataset features for training, and testing...")

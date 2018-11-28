@@ -237,6 +237,7 @@ class BaselineDataset():
                         # Balance number of rest classes
                         if (window_label == 0) and self.balance_classes:
                             if num_rest_samples > (num_samples / float(self.num_classes)):
+                                start_window += self.overlap_size
                                 continue
                             else:
                                 num_rest_samples += 1
