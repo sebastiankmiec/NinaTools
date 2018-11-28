@@ -32,3 +32,10 @@ class FeatureExtractor(ABC):
         :return: A single feature point.
         """
         pass
+
+    @abstractmethod
+    def global_setup(self, all_raw_samples):
+        """
+              :param all_raw_samples: All windows of emg samples.
+        """
+        pass

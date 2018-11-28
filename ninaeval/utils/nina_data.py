@@ -160,12 +160,15 @@ class BaselineDataset():
     window_size     = 200
     overlap_size    = 100
     baseline_dir    = "baseline_dataset"
+    num_classes     = 52
+    balance_classes = True # Will limit number of rest samples for train/test
 
+    # Filled via "create_dataset()"
     train_features  = None
     train_labels    = None
-
     test_features   = None
     test_labels     = None
+    all_samples     = None
 
     def __init__(self, all_data_path, feature_extractor):
 
@@ -186,16 +189,27 @@ class BaselineDataset():
                 4. test_labels
 
         :param feature_extractor: A function that transform 200 emg samples (a window) into a single feature point.
+        :param obtain_all_samples: Avoid creating a train/test split, simply obtain all samples of windowed data.
         """
+
+        self.create_dataset_helper(loaded_data, True)
+        self.create_dataset_helper(loaded_data, False)
+
+    def create_dataset_helper(self, loaded_data, obtain_all_samples):
 
         if self.load_dataset():
             return
 
+        # To be filled
         train_features  = []
         train_labels    = []
-
         test_features   = []
         test_labels     = []
+        all_samples     = []
+
+        # Class balancing
+        num_samples         = 0
+        num_rest_samples    = 0
 
         for patient in loaded_data.keys():
             for ex in loaded_data[patient].keys():
@@ -219,15 +233,32 @@ class BaselineDataset():
                     #
                     if offset == self.window_size:
                         emg_window      = cur_data["emg"][start_window:start_window + self.window_size]
-                        win_feat        = self.feature_extractor.extract_feature_point(emg_window)
-                        win_repetition  = cur_data["rerepetition"][start_window]
 
-                        if ((win_repetition == 2) or (win_repetition == 5)) and (window_label != 0):
-                            test_features.append(win_feat)
-                            test_labels.append(window_label)
+                        # Balance number of rest classes
+                        if (window_label == 0) and self.balance_classes:
+                            if num_rest_samples > (num_samples / float(self.num_classes)):
+                                continue
+                            else:
+                                num_rest_samples += 1
+                        num_samples += 1
+
+                        if obtain_all_samples:
+                            win_repetition  = cur_data["rerepetition"][start_window]
+                            if not ((win_repetition == 2) or (win_repetition == 5)):
+                                if window_label:
+                                    all_samples.append(emg_window)
+
+                        # Split into train/test:
                         else:
-                            train_features.append(win_feat)
-                            train_labels.append(window_label)
+                            win_feat        = self.feature_extractor.extract_feature_point(emg_window)
+                            win_repetition  = cur_data["rerepetition"][start_window]
+
+                            if (win_repetition == 2) or (win_repetition == 5):
+                                test_features.append(win_feat)
+                                test_labels.append(window_label)
+                            else:
+                                train_features.append(win_feat)
+                                train_labels.append(window_label)
 
                         start_window += self.overlap_size
 
@@ -237,13 +268,17 @@ class BaselineDataset():
 
         # Convert to numpy arrays:
         #
-        self.train_features = np.array(train_features)
-        self.train_labels   = np.array(train_labels)
-        self.test_features  = np.array(test_features)
-        self.test_labels    = np.array(test_labels)
+        if obtain_all_samples:
+            self.all_samples    = np.array(all_samples)
+            self.feature_extractor.global_setup(self.all_samples)
+        else:
+            self.train_features = np.array(train_features)
+            self.train_labels   = np.array(train_labels)
+            self.test_features  = np.array(test_features)
+            self.test_labels    = np.array(test_labels)
 
-        # Save the above to the baseline dataset directory:
-        self.save_dataset()
+            # Save the above to the baseline dataset directory:
+            self.save_dataset()
 
     def save_dataset(self):
 
