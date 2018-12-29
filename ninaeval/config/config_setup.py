@@ -1,4 +1,4 @@
-from ninaeval.models import baseline_model
+from ninaeval.models import baseline_model, advanced_model
 from ninaeval.config.config_parser import model_choices, feature_choices
 
 def get_model(model_abbrev):
@@ -11,7 +11,10 @@ def get_model(model_abbrev):
     try:
         model = getattr(baseline_model, model_choices[model_abbrev])
     except AttributeError:
-        pass
+        try:
+            model = getattr(advanced_model, model_choices[model_abbrev])
+        except AttributeError:
+            pass
 
     return model
 
@@ -25,6 +28,9 @@ def get_feat_extract(features_abbrev):
     try:
         feat_ext = getattr(baseline_model, feature_choices[features_abbrev])
     except AttributeError:
-        pass
+        try:
+            feat_ext = getattr(advanced_model, feature_choices[features_abbrev])
+        except AttributeError:
+            pass
 
     return feat_ext

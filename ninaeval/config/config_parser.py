@@ -5,9 +5,10 @@ import json
 #
 # Model/Feature abbreviations and choices.
 #
-model_choices   = {"rf": "RandomForest", "svm": "SupportVectorMachine", "conv": "ConvolutionalNN"}
+model_choices   = {"rf": "RandomForest", "svm": "SupportVectorMachine", "fcn": "FullyConnectedNN",
+                    "fcn2": "FullyConnectedNNV2"}
 feature_choices = {"rms": "RMS", "ts": "TimeStatistics", "mdwt": "MarginalDiscreteWaveletTransform",
-                    "hist": "HistogramBins", "all": "AllFeatures", "scat": "Scattering"}
+                    "hist": "HistogramBins", "all": "AllFeatures", "scat1d": "ScatteringFeat1D"}
 
 ########################################################################################################################
 ########################################################################################################################

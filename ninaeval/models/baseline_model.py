@@ -10,15 +10,19 @@ class RandomForest(ClassifierModel):
 
     num_trees = 128
 
-    def __init__(self):
+    def __init__(self, models_path, feat_extractor):
+        super().__init__(models_path, feat_extractor)
         self.classifier = RandomForestClassifier(n_estimators=self.num_trees)
 
-    def train_model(self, train_features, train_labels):
+    def train_model(self, train_features, train_labels, valid_features = None, valid_labels = None):
         self.classifier.fit(train_features, train_labels)
 
     def perform_inference(self, test_features, test_labels):
         predictions = self.classifier.predict(test_features)
         return self.classifier_accuracy(predictions, test_labels)
+
+    def save_figure(self, path):
+        pass
 
 #
 # Baseline Feature Extractors
@@ -81,6 +85,8 @@ class TimeStatistics(FeatureExtractor):
 
 class HistogramBins(FeatureExtractor):
 
+    requires_global_setup = True
+
     num_bins    = 20    # Assumed to be a multiple of 2
     threshold   = 3.0   # Number of standard deviations
 
@@ -102,7 +108,7 @@ class HistogramBins(FeatureExtractor):
         for i in range(num_channels):
             bins[i, :] = np.histogram(cen_samples[:, i], bins=self.num_bins, range=(min_val[i], max_val[i]))[0]
 
-        # Manually compute histogram (Commented out, slower, yet slightly better performance)
+        # Manually compute histogram (Commented out, slower, yet slightly better classifier performance)
         #
         #
         # window_size   = raw_samples.shape[0]
@@ -170,6 +176,8 @@ class MarginalDiscreteWaveletTransform(FeatureExtractor):
 
 
 class AllFeatures(FeatureExtractor):
+
+    requires_global_setup = True
 
     def __init__(self):
         self.ts     = TimeStatistics()
