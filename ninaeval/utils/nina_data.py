@@ -4,7 +4,8 @@ import scipy.io as sio
 import zipfile
 import numpy as np
 from abc import ABC, abstractmethod
-
+import copy
+from tqdm import tqdm
 
 #
 # Responsible for downloading, and formatting data into X
@@ -176,8 +177,12 @@ class Dataset(ABC):
     E2_name         = "E2"
     rest_label      = 0
 
+    # Data augmentation parameters
+    snr_max     = 50 # Signal-to-Noise ratio = (variance of signal) / (variance of noise)
+    snr_min     = 25
+    snr_ticks   = 3 # Number of increments
 
-    def __init__(self, all_data_path, feature_extractor):
+    def __init__(self, all_data_path, feature_extractor, augment_data = True):
 
         if feature_extractor is None:
             raise ValueError("Feature extractor is empty.")
@@ -186,6 +191,7 @@ class Dataset(ABC):
 
         self.feature_extractor  = feature_extractor
         self.all_data_path      = all_data_path
+        self.augment_data       = augment_data
 
     def create_dataset(self, loaded_data):
 
@@ -220,7 +226,7 @@ class Dataset(ABC):
         num_samples         = 0
         num_rest_samples    = 0
 
-        for patient in loaded_data.keys():
+        for patient in tqdm(loaded_data.keys()):
             for ex in loaded_data[patient].keys():
                 self.process_single_exercise(loaded_data, patient, ex, num_samples,
                                                 num_rest_samples, obtain_all_samples)
@@ -231,6 +237,9 @@ class Dataset(ABC):
             self.all_samples    = np.array(self.all_samples)
             self.feature_extractor.global_setup(self.all_samples)
         else:
+            if self.augment_data:
+                self.create_augmented_data(loaded_data)
+
             self.train_features = np.array(self.train_features)
             self.train_labels   = np.array(self.train_labels)
             self.test_features  = np.array(self.test_features)
@@ -285,6 +294,65 @@ class Dataset(ABC):
         self.test_labels    = np.load(os.path.join(feat_path, "test_labels.npy"))
 
         return True
+
+    def create_augmented_data(self, loaded_data):
+        print("Creating augmented data (slow)...")
+        loaded_data_copy                = copy.deepcopy(loaded_data)
+        channel_vars, num_increments    = self.get_channel_vars(loaded_data)
+
+        # Create Gaussian white noise samples
+        cov_mat         = np.diag(channel_vars)
+        mean_vec        = np.zeros(16, np.float64)
+        noise_samples   = np.random.multivariate_normal(mean_vec, cov_mat, num_increments)
+
+        # Class balancing
+        num_samples         = 0
+        num_rest_samples    = 0
+
+        # For each SNR combination
+        for snr in tqdm(np.linspace(self.snr_min, self.snr_max, self.snr_ticks)):
+            sample_counter  = 0
+            np.random.shuffle(noise_samples)
+
+            # Augment every single example
+            for patient in loaded_data.keys():
+                for ex in loaded_data[patient].keys():
+                    # Augment exercise
+                    sample_counter = self.augment_exercise(loaded_data_copy[patient][ex],
+                                                            noise_samples, sample_counter, snr)
+
+                    # Create noisy examples, add to self.train_features\labels...
+                    self.process_single_exercise(loaded_data_copy, patient, ex, num_samples,
+                                                 num_rest_samples, False)
+
+            loaded_data_copy = copy.deepcopy(loaded_data)
+
+    def augment_exercise(self, exercise, noise_samples, sample_counter, snr):
+        for idx, label in enumerate(exercise["restimulus"]):
+            if label != 0:
+                # The noise has variance y = x * (1/sqrt(SNR))^2 = x/SNR,
+                #      where x is the variance of the signal, y is the variance of the noise.
+                exercise["emg"][idx] += noise_samples[sample_counter] * (1 / np.sqrt(snr))
+                sample_counter += 1
+        return sample_counter
+
+    def get_channel_vars(self, loaded_data):
+        channel_vars    = np.zeros(16, dtype=np.float64)
+        num_increments  = 0
+
+        def increment_channel_sum(exercise, channel_sum):
+            increments = 0
+            for idx, label in enumerate(exercise["restimulus"]):
+                if label != 0:
+                    increments  += 1
+                    channel_sum += np.square(exercise["emg"][idx]) # Assuming mean is 0
+            return increments
+
+        for patient in loaded_data.keys():
+            for ex in loaded_data[patient].keys():
+                num_increments += increment_channel_sum(loaded_data[patient][ex], channel_vars)
+
+        return channel_vars / float(num_increments - 1), num_increments
 
     @abstractmethod
     def process_single_exercise(self, loaded_data, patient, ex, num_samples, num_rest_samples, obtain_all_samples):
