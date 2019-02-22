@@ -1,4 +1,4 @@
 {
-	"model": "fcn",
+	"model": "rf",
 	"features": "rms"
 }

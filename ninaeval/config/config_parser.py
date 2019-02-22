@@ -8,7 +8,8 @@ import json
 model_choices   = {"rf": "RandomForest", "svm": "SupportVectorMachine", "fcn": "FullyConnectedNN",
                     "fcn2": "FullyConnectedNNV2"}
 feature_choices = {"rms": "RMS", "ts": "TimeStatistics", "mdwt": "MarginalDiscreteWaveletTransform",
-                    "hist": "HistogramBins", "all": "AllFeatures", "scat1d": "ScatteringFeat1D"}
+                    "hist": "HistogramBins", "all": "AllFeatures", "scat1d": "ScatteringFeat1D",
+                    "test": "Testing"}
 
 ########################################################################################################################
 ########################################################################################################################

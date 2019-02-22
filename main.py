@@ -15,7 +15,7 @@ def main():
 
     # Generate a dataset, if necessary:
     print("Checking for existing features extracted...")
-    dataset = LogicalDatasetV1(DATA_PATH, feat_extractor, False)
+    dataset = BaselineDataset(DATA_PATH, feat_extractor, False)
 
     if not dataset.load_dataset():
         data_parser = NinaDataParser(DATA_PATH)
