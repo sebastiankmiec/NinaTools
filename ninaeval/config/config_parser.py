@@ -6,10 +6,15 @@ import json
 # Model/Feature abbreviations and choices.
 #
 model_choices   = {"rf": "RandomForest", "svm": "SupportVectorMachine", "fcn": "FullyConnectedNN",
-                    "fcn2": "FullyConnectedNNV2"}
+                    "fcn2": "FullyConnectedNNV2", "vlad": "VLAD", "rnn": "RecurrentNN"}
+
 feature_choices = {"rms": "RMS", "ts": "TimeStatistics", "mdwt": "MarginalDiscreteWaveletTransform",
                     "hist": "HistogramBins", "all": "AllFeatures", "scat1d": "ScatteringFeat1D",
-                    "test": "Testing"}
+                    "none": "EmptyFeature", "multirms": "MultipleRMS", "pmrms" :"PaddedMultiRMS",
+                    "kmrms": "KMeansRMS", "imuprms": "IMUPaddedMultiRMS"}
+
+dataset_choices = {"base": "BaselineDataset", "v1":"LogicalDatasetV1", "basevar": "BaselineVariableWindowDataset",
+                    "v1var": "LogicalVariableWindowDataset", "basevarimu":"IMUVariableWindowDataset"}
 
 ########################################################################################################################
 ########################################################################################################################
@@ -24,6 +29,7 @@ def init_parser():
 
     parser = OptionParser()
 
+    #
     # Model choices
     #
     parser.add_option('--model', action='store', type='choice', default='rf',
@@ -32,18 +38,11 @@ def init_parser():
     parser.add_option('--features', action='store', type='choice', default='rms',
                       choices=list(feature_choices.keys()))
 
-    # Actions to perform
     #
-    parser.add_option('--action', action='store', type='choice', default='train',
-                      choices=['train', 'validate', 'test'])
-
+    # Dataset choices
+    #
     parser.add_option('--data', action='store', type='choice', default='v1',
-                      choices=['baseline', 'v1'])
-
-    #
-    # Model training settings
-    #
-    parser.add_option('--rf_trees', action='store', type='int', default='128')
+                      choices=list(dataset_choices.keys()))
 
     return parser
 

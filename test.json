@@ -1,4 +1,5 @@
 {
 	"model": "rf",
-	"features": "rms"
+	"features": "pmrms",
+	"data": "basevarimu"
 }

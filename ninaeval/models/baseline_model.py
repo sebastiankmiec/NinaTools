@@ -3,9 +3,13 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from pywt import wavedec
 
+########################################################################################################################
+########################################################################################################################
 #
 # Baseline Classifiers
 #
+########################################################################################################################
+########################################################################################################################
 class RandomForest(ClassifierModel):
 
     num_trees = 128
@@ -14,19 +18,28 @@ class RandomForest(ClassifierModel):
         super().__init__(models_path, feat_extractor)
         self.classifier = RandomForestClassifier(n_estimators=self.num_trees)
 
+    def get_class_probabilities(self, test_features):
+        return self.classifier.predict_proba(test_features)
+
     def train_model(self, train_features, train_labels, valid_features = None, valid_labels = None):
+        self.num_samples = train_features.shape[0]
         self.classifier.fit(train_features, train_labels)
 
     def perform_inference(self, test_features, test_labels):
-        predictions = self.classifier.predict(test_features)
-        return self.classifier_accuracy(predictions, test_labels)
+        return self.classifier.predict(test_features)
 
     def save_figure(self, path):
         pass
 
+
+
+########################################################################################################################
+########################################################################################################################
 #
 # Baseline Feature Extractors
 #
+########################################################################################################################
+########################################################################################################################
 class RMS(FeatureExtractor):
 
     def extract_feature_point(self, raw_samples):
@@ -47,7 +60,17 @@ class RMS(FeatureExtractor):
         pass
 
 class TimeStatistics(FeatureExtractor):
+    """
+        Refer to:
+            'Hudgins B, Parker P, Scott RN. A new strategy for multifunction myoelectric control. Biomedical
+                Engineering, IEEE Transactions on. 1993; 40(1):82–94. https://doi.org/10.1109/10.204774'
 
+        -> Following time domain statistics are computed
+            1. Mean absolute value
+            2. Number of zeroes (with a threshold)
+            3. Number of slope changes (with a threshold)
+            4. Waveform length
+    """
     noise_thresh = 2
 
     # Note: We do not use "Mean Absolute Value Slope"
@@ -95,6 +118,14 @@ class TimeStatistics(FeatureExtractor):
 
 
 class HistogramBins(FeatureExtractor):
+    """
+        Refer to:
+            'Zardoshti-Kermani M, Wheeler BC, Badie K, Hashemi RM. EMG feature evaluation for movement control of upper
+                extremity prostheses. IEEE Transactions on Rehabilitation Engineering. 1995; 3(4):324–333.
+                https://doi.org/10.1109/86.481972'
+
+        -> Histogram bin features are computed, within "threshold" many std
+    """
 
     requires_global_setup = True
 
@@ -119,7 +150,7 @@ class HistogramBins(FeatureExtractor):
         for i in range(num_channels):
             bins[i, :] = np.histogram(cen_samples[:, i], bins=self.num_bins, range=(min_val[i], max_val[i]))[0]
 
-        # Manually compute histogram (Commented out, slower, yet slightly better classifier performance)
+        # Manually compute histogram (Commented out, much slower, yet slightly better classifier performance)
         #
         #
         # window_size   = raw_samples.shape[0]
@@ -145,6 +176,9 @@ class HistogramBins(FeatureExtractor):
 
 
     def global_setup(self, all_raw_samples):
+        """
+            Global setup required to compute global mean/std
+        """
 
         num_windows     = all_raw_samples.shape[0]
         window_size     = all_raw_samples.shape[1]
@@ -163,6 +197,14 @@ class HistogramBins(FeatureExtractor):
 
 
 class MarginalDiscreteWaveletTransform(FeatureExtractor):
+    """
+        Refer to:
+            'Lucas M, Gaufriau A, Pascual S, Doncarli C, Farina D. Multi-channel surface EMG classification using
+                support vector machines and signal-based wavelet optimization. Biomedical Signal Processing and
+                Control. 2008; 3(2):169–174. https://doi.org/10.1016/j.bspc.2007.09.002'
+
+        Compute a discrete wavelet transform, and sums over each level of the transform (rectified)
+    """
 
     num_levels      = 3
     mother_wavelet  = "db7"
@@ -187,6 +229,9 @@ class MarginalDiscreteWaveletTransform(FeatureExtractor):
 
 
 class AllFeatures(FeatureExtractor):
+    """
+        A simple concatenation of all baseline features
+    """
 
     requires_global_setup = True
 
@@ -207,3 +252,15 @@ class AllFeatures(FeatureExtractor):
 
     def global_setup(self, all_raw_samples):
         self.hist.global_setup(all_raw_samples)
+
+
+class EmptyFeature(FeatureExtractor):
+    """
+        Raw EMG window samples
+    """
+
+    def extract_feature_point(self, raw_samples):
+        return raw_samples
+
+    def global_setup(self, all_raw_samples):
+        pass
