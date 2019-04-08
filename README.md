@@ -1,8 +1,13 @@
 # *ninaeval* Python Package
 
-**From the Wiki here, *ninaeval* can:**
+NinaTools, and the PythonMyoLinux repository, constitute the work of my final year capstone project (poster below).
+![image](https://drive.google.com/uc?export=view&id=1tMUZbA5dVqKowB9Ruh7uCwTAUb2KQM0H)
 
-1. Download, process and format the NinaPro dataset.
+
+
+**The *ninaeval* package can:**
+
+1. Download, process and format the NinaPro dataset (as well as newly created data).
 2. Extract features to create training/validation/testing sets.
 3. Compare the performance of various classifier models.
 
