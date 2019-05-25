@@ -23,45 +23,60 @@ NinaTools, and the PythonMyoLinux repository, constitute the work of my final ye
 &nbsp;
 
 
-## Example Usage: *main.py*
+# Setup
+```
+git clone https://github.com/sebastiankmiec/NinaTools.git
+cd NinaTools/
 ```
 
-from ninaeval.config import config_parser, config_setup
-from ninaeval.utils.nina_data import NinaDataParser, BaselineDataset, LogicalDatasetV1
+1. Create conda environment, install basic dependencies
+```
+conda create -n testnina -c conda-forge python=3.5
+conda activate testnina
 
-DATA_PATH = "all_data/"
-MODEL_PATH = "all_models/"
+conda install -c conda-forge pytorch pywavelets scipy pandas
+pip install torchnet tqdm matplotlib scikit-learn appdirs
+```
 
-def main():
+2. Setup kymatio
+```
+cd ..
+git clone https://github.com/kymatio/kymatio
+cd kymatio
+python setup.py install
+```
 
-    # Reads JSON file via --json, or command line arguments:
-    config_param = config_parser.parse_config()
+3. Run an example
+```
+cd ../NinaTools/
+python ninapro_example.py --json=test.json
+```
+&nbsp;
 
-    # Basic setup:
-    feat_extractor  = config_setup.get_feat_extract(config_param.features)()
-    classifier      = config_setup.get_model(config_param.model)(MODEL_PATH, feat_extractor)
 
-    # Generate a dataset, if necessary:
-    print("Checking for existing features extracted...")
-    dataset = LogicalDatasetV1(DATA_PATH, feat_extractor, False)
-
-    if not dataset.load_dataset():
-        data_parser = NinaDataParser(DATA_PATH)
-        print("Loading Ninapro data from processed directory...")
-        loaded_nina = data_parser.load_processed_data()
-
-        print("Extracting dataset features for training, and testing...")
-        dataset.create_dataset(loaded_nina)
-
-    # Train on the training dataset:
-    print("Training classifier on training dataset...")
-    classifier.train_model(dataset.train_features, dataset.train_labels, dataset.test_features, dataset.test_labels)
-    classifier.save_figure("Training_Accuracy.png")
-
-    # Classify the testing dataset:
-    print("Testing classifier on testing dataset...")
-    print(classifier.perform_inference(dataset.test_features, dataset.test_labels))
-
-if __name__ == "__main__":
-    main()
+# Usage
+Use one of the following, depending on your use case
+```
+python ninapro_example.py --json=test.json
+python new_data_example.py --json=test.json
+```
+For the first example, you should get the following output
+```
+1/10. Downloading "https://zenodo.org/record/1000116/files/s2.zip?download=1".
+2/10. Downloading "https://zenodo.org/record/1000116/files/s8.zip?download=1".
+3/10. Downloading "https://zenodo.org/record/1000116/files/s10.zip?download=1".
+4/10. Downloading "https://zenodo.org/record/1000116/files/s6.zip?download=1".
+5/10. Downloading "https://zenodo.org/record/1000116/files/s9.zip?download=1".
+6/10. Downloading "https://zenodo.org/record/1000116/files/s3.zip?download=1".
+7/10. Downloading "https://zenodo.org/record/1000116/files/s1.zip?download=1".
+8/10. Downloading "https://zenodo.org/record/1000116/files/s5.zip?download=1".
+9/10. Downloading "https://zenodo.org/record/1000116/files/s4.zip?download=1".
+10/10. Downloading "https://zenodo.org/record/1000116/files/s7.zip?download=1".
+Loading Ninapro data from processed directory...
+Extracting dataset features for training, and testing...
+100%|████████████████████████████████████████████████████████████████████| 10/10 [00:10<00:00,  1.07s/it]
+100%|████████████████████████████████████████████████████████████████████| 10/10 [00:11<00:00,  1.12s/it]
+Training classifier on training dataset...
+Testing classifier on testing dataset...
+0.8943925233644859
 ```
