@@ -1,5 +1,5 @@
 {
 	"model": "rf",
 	"features": "pmrms",
-	"data": "basevarimu"
+	"data": "basevar"
 }

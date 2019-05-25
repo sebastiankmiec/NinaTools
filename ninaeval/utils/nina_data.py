@@ -193,14 +193,14 @@ class Dataset(ABC):
         self.all_data_path      = all_data_path
         self.augment_data       = augment_data
 
-    def create_dataset(self, loaded_data):
+    def create_dataset(self, loaded_data, adjust_labels = True):
 
         if self.feature_extractor.requires_global_setup:
-            self.create_dataset_helper(loaded_data, True)
+            self.create_dataset_helper(loaded_data, True, adjust_labels)
 
-        self.create_dataset_helper(loaded_data, False)
+        self.create_dataset_helper(loaded_data, False, adjust_labels)
 
-    def create_dataset_helper(self, loaded_data, obtain_all_samples):
+    def create_dataset_helper(self, loaded_data, obtain_all_samples, adjust_labels):
         """
             Converts loaded data (via NinaDataParser) into a useable, baseline dataset, consisting of:
                 1. train_features
@@ -210,6 +210,7 @@ class Dataset(ABC):
 
         :param feature_extractor: A function that transform 40 emg samples (a window) into a single feature point.
         :param obtain_all_samples: Avoid creating a train/test split, simply obtain all samples of windowed data.
+        :param adjust_labels: Adjust the ground truth labels (according to exercise number)
         """
 
         if self.load_dataset():
@@ -229,16 +230,16 @@ class Dataset(ABC):
         for patient in tqdm(loaded_data.keys()):
             for ex in loaded_data[patient].keys():
                 self.process_single_exercise(loaded_data, patient, ex, num_samples,
-                                                num_rest_samples, obtain_all_samples)
+                                                num_rest_samples, obtain_all_samples, adjust_labels)
 
         # Convert to numpy arrays:
         #
         if obtain_all_samples:
-            self.all_samples    = np.array(self.all_samples)
+            #self.all_samples    = np.array(self.all_samples)
             self.feature_extractor.global_setup(self.all_samples)
         else:
             if self.augment_data:
-                self.create_augmented_data(loaded_data)
+                self.create_augmented_data(loaded_data, adjust_labels)
 
             self.train_features = np.array(self.train_features)
             self.train_labels   = np.array(self.train_labels)
@@ -295,7 +296,7 @@ class Dataset(ABC):
 
         return True
 
-    def create_augmented_data(self, loaded_data):
+    def create_augmented_data(self, loaded_data, adjust_labels):
         print("Creating augmented data (slow)...")
         loaded_data_copy                = copy.deepcopy(loaded_data)
         channel_vars, num_increments    = self.get_channel_vars(loaded_data)
@@ -323,7 +324,7 @@ class Dataset(ABC):
 
                     # Create noisy examples, add to self.train_features\labels...
                     self.process_single_exercise(loaded_data_copy, patient, ex, num_samples,
-                                                 num_rest_samples, False)
+                                                 num_rest_samples, False, adjust_labels)
 
             loaded_data_copy = copy.deepcopy(loaded_data)
 
@@ -355,7 +356,8 @@ class Dataset(ABC):
         return channel_vars / float(num_increments - 1), num_increments
 
     @abstractmethod
-    def process_single_exercise(self, loaded_data, patient, ex, num_samples, num_rest_samples, obtain_all_samples):
+    def process_single_exercise(self, loaded_data, patient, ex, num_samples, num_rest_samples, obtain_all_samples,
+                                    adjust_labels):
         pass
 
     @abstractmethod
@@ -369,7 +371,8 @@ class Dataset(ABC):
 #
 class BaselineDataset(Dataset):
 
-    def process_single_exercise(self, loaded_data, patient, ex, num_samples, num_rest_samples, obtain_all_samples):
+    def process_single_exercise(self, loaded_data, patient, ex, num_samples, num_rest_samples, obtain_all_samples,
+                                    adjust_labels):
 
         cur_data = loaded_data[patient][ex]
         num_emg = cur_data["emg"].shape[0]
@@ -411,7 +414,7 @@ class BaselineDataset(Dataset):
                     win_repetition = cur_data["rerepetition"][start_window]
 
                     # Correct the window label
-                    if window_label != self.rest_label:
+                    if (window_label != self.rest_label) and adjust_labels:
                         if ex == self.E3_name:
                             window_label += self.E1_classes + self.E2_classes
                         elif ex == self.E2_name:
@@ -438,7 +441,8 @@ class BaselineDataset(Dataset):
 #
 class LogicalDatasetV1(Dataset):
 
-    def process_single_exercise(self, loaded_data, patient, ex, num_samples, num_rest_samples, obtain_all_samples):
+    def process_single_exercise(self, loaded_data, patient, ex, num_samples, num_rest_samples, obtain_all_samples,
+                                    adjust_labels):
 
         cur_data    = loaded_data[patient][ex]
         num_emg     = cur_data["emg"].shape[0]
@@ -480,7 +484,7 @@ class LogicalDatasetV1(Dataset):
                     win_repetition = cur_data["rerepetition"][start_window]
 
                     # Correct the window label
-                    if window_label != self.rest_label:
+                    if (window_label != self.rest_label) and adjust_labels:
                         if ex == self.E3_name:
                             window_label += self.E1_classes + self.E2_classes
                         elif ex == self.E2_name:
@@ -508,7 +512,8 @@ class LogicalDatasetV1(Dataset):
 #
 class LogicalDatasetBinaryV1(Dataset):
 
-    def process_single_exercise(self, loaded_data, patient, ex, num_samples, num_rest_samples, obtain_all_samples):
+    def process_single_exercise(self, loaded_data, patient, ex, num_samples, num_rest_samples, obtain_all_samples,
+                                    adjust_labels):
 
         cur_data    = loaded_data[patient][ex]
         num_emg     = cur_data["emg"].shape[0]
@@ -550,7 +555,7 @@ class LogicalDatasetBinaryV1(Dataset):
                     win_repetition = cur_data["rerepetition"][start_window]
 
                     # Correct the window label
-                    if window_label != self.rest_label:
+                    if (window_label != self.rest_label) and adjust_labels:
                         if ex == self.E3_name:
                             window_label += self.E1_classes + self.E2_classes
                         elif ex == self.E2_name:
@@ -582,10 +587,11 @@ class LogicalDatasetBinaryV1(Dataset):
 #
 class BaselineVariableWindowDataset(Dataset):
 
-    def process_single_exercise(self, loaded_data, patient, ex, num_samples, num_rest_samples, obtain_all_samples):
+    def process_single_exercise(self, loaded_data, patient, ex, num_samples, num_rest_samples, obtain_all_samples,
+                                    adjust_labels):
 
-        cur_data = loaded_data[patient][ex]
-        num_emg = cur_data["emg"].shape[0]
+        cur_data    = loaded_data[patient][ex]
+        num_emg     = cur_data["emg"].shape[0]
 
         # Look for possible windows of EMG data
         #
@@ -602,7 +608,7 @@ class BaselineVariableWindowDataset(Dataset):
             # Found a valid window
             #
             if offset >= self.window_size:
-                emg_window = cur_data["emg"][start_window:start_window + self.window_size]
+                emg_window = cur_data["emg"][start_window:start_window + offset]
 
                 # Balance number of rest classes
                 if (window_label == self.rest_label) and self.balance_classes:
@@ -625,7 +631,7 @@ class BaselineVariableWindowDataset(Dataset):
                     win_repetition = cur_data["rerepetition"][start_window]
 
                     # Correct the window label
-                    if window_label != self.rest_label:
+                    if (window_label != self.rest_label) and adjust_labels:
                         if ex == self.E3_name:
                             window_label += self.E1_classes + self.E2_classes
                         elif ex == self.E2_name:
@@ -657,7 +663,8 @@ class BaselineVariableWindowDataset(Dataset):
 #
 class LogicalVariableWindowDataset(Dataset):
 
-    def process_single_exercise(self, loaded_data, patient, ex, num_samples, num_rest_samples, obtain_all_samples):
+    def process_single_exercise(self, loaded_data, patient, ex, num_samples, num_rest_samples, obtain_all_samples,
+                                    adjust_labels):
 
         cur_data = loaded_data[patient][ex]
         num_emg = cur_data["emg"].shape[0]
@@ -700,7 +707,7 @@ class LogicalVariableWindowDataset(Dataset):
                     win_repetition = cur_data["rerepetition"][start_window]
 
                     # Correct the window label
-                    if window_label != self.rest_label:
+                    if (window_label != self.rest_label) and adjust_labels:
                         if ex == self.E3_name:
                             window_label += self.E1_classes + self.E2_classes
                         elif ex == self.E2_name:

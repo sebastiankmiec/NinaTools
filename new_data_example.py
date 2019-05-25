@@ -1,9 +1,8 @@
 from ninaeval.config import config_parser, config_setup
-from ninaeval.utils.nina_data import NinaDataParser
 from ninaeval.utils.data_extract import extract_myo_all_csv
 
-DATA_PATH = "all_data/"
-MODEL_PATH = "all_models/"
+DATA_PATH   = "all_data/"
+MODEL_PATH  = "all_models/"
 
 def main():
 
@@ -21,10 +20,14 @@ def main():
 
         new_data = {}
 
+        #
+        # Your own data paths....
+        #
+
         # extract_myo_all_csv('/home/skmiec/Documents/ex5/a/myo_all_data.csv', new_data, "s11", "E1")
         # extract_myo_all_csv('/home/skmiec/Documents/ex5/b/myo_all_data.csv', new_data, "s11", "E2")
         # extract_myo_all_csv('/home/skmiec/Documents/ex5/c/myo_all_data.csv', new_data, "s11", "E3")
-        #
+
         # extract_myo_all_csv('/home/skmiec/Documents/ex6/a/myo_all_data.csv', new_data, "s12", "E1")
         # extract_myo_all_csv('/home/skmiec/Documents/ex6/b/myo_all_data.csv', new_data, "s12", "E2")
         # extract_myo_all_csv('/home/skmiec/Documents/ex6/c/myo_all_data.csv', new_data, "s12", "E3")

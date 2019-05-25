@@ -25,7 +25,7 @@ class RandomForest(ClassifierModel):
         self.num_samples = train_features.shape[0]
         self.classifier.fit(train_features, train_labels)
 
-    def perform_inference(self, test_features, test_labels):
+    def perform_inference_helper(self, test_features):
         return self.classifier.predict(test_features)
 
     def save_figure(self, path):

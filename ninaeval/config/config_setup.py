@@ -1,10 +1,11 @@
 from ninaeval.models import baseline_model, advanced_model
-from ninaeval.config.config_parser import model_choices, feature_choices
+from ninaeval.config.config_parser import model_choices, feature_choices, dataset_choices
+from ninaeval.utils import nina_data
 
 def get_model(model_abbrev):
     """
     :param model_abbrev: An abbreviated model name (config_parser.py).
-    :return: ClassifierModel
+    :return: ClassifierModel object
     """
 
     model = None
@@ -21,7 +22,7 @@ def get_model(model_abbrev):
 def get_feat_extract(features_abbrev):
     """
     :param features_abbrev: An abbreviated model name (config_parser.py).
-    :return: FeatureExtractor
+    :return: FeatureExtractor object
     """
 
     feat_ext = None
@@ -34,3 +35,18 @@ def get_feat_extract(features_abbrev):
             pass
 
     return feat_ext
+
+
+def get_dataset(dataset_abbrev):
+    """
+    :param dataset_abbrev: An abbreviated dataset name (config_parser.py).
+    :return: Dataset object
+    """
+
+    dataset = None
+    try:
+        dataset = getattr(nina_data, dataset_choices[dataset_abbrev])
+    except AttributeError:
+        pass
+
+    return dataset

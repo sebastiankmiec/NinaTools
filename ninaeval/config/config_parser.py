@@ -41,7 +41,7 @@ def init_parser():
     #
     # Dataset choices
     #
-    parser.add_option('--data', action='store', type='choice', default='v1',
+    parser.add_option('--data', action='store', type='choice', default='base',
                       choices=list(dataset_choices.keys()))
 
     return parser

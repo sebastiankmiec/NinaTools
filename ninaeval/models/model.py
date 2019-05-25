@@ -41,7 +41,7 @@ class ClassifierModel(ABC):
         """
         pass
 
-    def perform_inference(self, test_features, test_labels):
+    def perform_inference(self, test_features, test_labels = None):
         """
             Given test features and labels, compute predictions and classifier accuracy,
 
@@ -50,7 +50,7 @@ class ClassifierModel(ABC):
         :return: * (test_labels != None) Classifier accuracy from 0 ~ 1.0.
                  * (test_labels == None) Predictions
         """
-        predictions = self.perform_inference(test_features)
+        predictions = self.perform_inference_helper(test_features)
 
         if test_labels is None:
             return predictions
@@ -58,7 +58,7 @@ class ClassifierModel(ABC):
             return self.classifier_accuracy(predictions, test_labels)
 
     @abstractmethod
-    def perform_inference(self, test_features):
+    def perform_inference_helper(self, test_features):
         """
             Helper function for above
         """
@@ -115,7 +115,7 @@ class ClassifierModel(ABC):
         :return: [dict] : Each key refers to a per class accuracy
         """
 
-        pred_labels = self.perform_inference(test_features)
+        pred_labels = self.perform_inference_helper(test_features)
 
         test_labels_found = {}
         for x in test_labels:
@@ -230,7 +230,7 @@ class TorchModel(ClassifierModel):
         print("Training complete ({} epochs)...".format(self.num_epoch))
 
 
-    def perform_inference(self, test_features):
+    def perform_inference_helper(self, test_features):
         """
             Helper function for ClassifierModel's perform_inference(self, test_features, test_labels)
         """
@@ -241,6 +241,12 @@ class TorchModel(ClassifierModel):
         predictions = (self.model((torch.from_numpy(test_features).float()).to(self.device))).cpu().detach()
         predictions = (torch.argmax(predictions, 1)).numpy()
 
+        return predictions
+
+    def get_class_probabilities(self, test_features):
+        # Use inference model
+        self.model.eval()
+        predictions = (self.model((torch.from_numpy(test_features).float()).to(self.device))).cpu().detach().numpy()
         return predictions
 
     def perform_testing(self, test_features, test_labels):
