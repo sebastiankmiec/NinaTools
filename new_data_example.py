@@ -23,16 +23,15 @@ def main():
         #
         # Your own data paths....
         #
-
+        print("Extracting dataset features for training, and testing...")
         # extract_myo_all_csv('/home/skmiec/Documents/ex5/a/myo_all_data.csv', new_data, "s11", "E1")
         # extract_myo_all_csv('/home/skmiec/Documents/ex5/b/myo_all_data.csv', new_data, "s11", "E2")
         # extract_myo_all_csv('/home/skmiec/Documents/ex5/c/myo_all_data.csv', new_data, "s11", "E3")
-
+        #
         # extract_myo_all_csv('/home/skmiec/Documents/ex6/a/myo_all_data.csv', new_data, "s12", "E1")
         # extract_myo_all_csv('/home/skmiec/Documents/ex6/b/myo_all_data.csv', new_data, "s12", "E2")
         # extract_myo_all_csv('/home/skmiec/Documents/ex6/c/myo_all_data.csv', new_data, "s12", "E3")
 
-        print("Extracting dataset features for training, and testing...")
         dataset.create_dataset(new_data, False)
 
     print("Training classifier on training dataset...")
@@ -41,6 +40,7 @@ def main():
     print("Testing classifier on testing dataset...")
     print(classifier.perform_inference(dataset.test_features, dataset.test_labels))
 
+    classifier.save_model("/home/skmiec/Documents/")
 
 if __name__ == "__main__":
     main()
