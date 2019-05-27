@@ -27,6 +27,7 @@ NinaTools, and the PythonMyoLinux repository, constitute the work of my final ye
 ```
 git clone https://github.com/sebastiankmiec/NinaTools.git
 cd NinaTools/
+pip install .
 ```
 
 1. Create conda environment, install basic dependencies
@@ -44,12 +45,6 @@ cd ..
 git clone https://github.com/kymatio/kymatio
 cd kymatio
 python setup.py install
-```
-
-3. Run an example
-```
-cd ../NinaTools/
-python ninapro_example.py --json=test.json
 ```
 &nbsp;
 
