@@ -24,22 +24,24 @@ NinaTools, and the PythonMyoLinux repository, constitute the work of my final ye
 
 
 # Setup
+
+1. Create conda environment, install basic dependencies
+```
+conda create -n myo_env -y
+conda activate myo_env
+
+conda install -c conda-forge python=3.5 pytorch pywavelets scipy pandas -y
+pip install torchnet tqdm matplotlib scikit-learn appdirs
+```
+
+2. Install the *ninaeval* package
 ```
 git clone https://github.com/sebastiankmiec/NinaTools.git
 cd NinaTools/
 pip install .
 ```
 
-1. Create conda environment, install basic dependencies
-```
-conda create -n testnina -c conda-forge python=3.5
-conda activate testnina
-
-conda install -c conda-forge pytorch pywavelets scipy pandas
-pip install torchnet tqdm matplotlib scikit-learn appdirs
-```
-
-2. Setup kymatio
+3. Setup kymatio
 ```
 cd ..
 git clone https://github.com/kymatio/kymatio
